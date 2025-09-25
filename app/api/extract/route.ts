@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { spawn } from 'child_process';
-import path from 'path';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,16 +22,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use Python script for extraction
-    const result = await extractWithPython(url);
+    // Extract video using JavaScript-based approach
+    const result = await extractVideo(url);
     
     if (result.success) {
-      // Log the extraction for analytics
       console.log('Video extracted:', { url, timestamp: new Date().toISOString() });
       
       return NextResponse.json({
-        videoUrl: result.video_url,
-        thumbnailUrl: result.thumbnail_url || 'https://via.placeholder.com/500x500?text=Instagram+Video',
+        videoUrl: result.videoUrl,
+        thumbnailUrl: result.thumbnailUrl || 'https://via.placeholder.com/500x500?text=Instagram+Video',
         title: result.title || 'Instagram Video',
         author: result.author || 'Instagram User'
       });
@@ -52,48 +51,104 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function extractWithPython(url: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const pythonScript = path.join(process.cwd(), 'instagram_extractor.py');
-    const python = spawn('python', [pythonScript, url]);
-    
-    let output = '';
-    let error = '';
-    
-    python.stdout.on('data', (data) => {
-      output += data.toString();
+async function extractVideo(url: string): Promise<any> {
+  try {
+    const userAgents = [
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    ];
+
+    const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': randomUserAgent,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+      },
+      timeout: 10000
     });
-    
-    python.stderr.on('data', (data) => {
-      error += data.toString();
-    });
-    
-    python.on('close', (code) => {
-      if (code === 0) {
+
+    const $ = cheerio.load(response.data);
+
+    // Try to find video URL in meta tags
+    let videoUrl = $('meta[property="og:video"]').attr('content') || 
+                   $('meta[property="og:video:secure_url"]').attr('content');
+
+    // If no video URL found, try to extract from JSON-LD
+    if (!videoUrl) {
+      const jsonLdScripts = $('script[type="application/ld+json"]');
+      jsonLdScripts.each((i, script) => {
         try {
-          const result = JSON.parse(output);
-          resolve(result);
-        } catch (parseError) {
-          console.error('Failed to parse Python output:', parseError);
-          resolve({ success: false, error: 'Failed to parse extraction result' });
+          const jsonData = JSON.parse($(script).html() || '{}');
+          if (jsonData['@type'] === 'VideoObject' && jsonData.contentUrl) {
+            videoUrl = jsonData.contentUrl;
+            return false; // Break the loop
+          }
+        } catch (e) {
+          // Continue to next script
         }
-      } else {
-        console.error('Python script failed:', error);
-        resolve({ success: false, error: 'Python extraction failed' });
+      });
+    }
+
+    // Try to extract from window._sharedData
+    if (!videoUrl) {
+      const scriptContent = $('script').text();
+      const sharedDataMatch = scriptContent.match(/window\._sharedData\s*=\s*({.+?});/);
+      if (sharedDataMatch) {
+        try {
+          const sharedData = JSON.parse(sharedDataMatch[1]);
+          const media = sharedData?.entry_data?.PostPage?.[0]?.graphql?.shortcode_media;
+          if (media?.is_video && media?.video_url) {
+            videoUrl = media.video_url;
+          }
+        } catch (e) {
+          // Continue with other methods
+        }
       }
-    });
+    }
+
+    if (!videoUrl) {
+      return { success: false, error: 'Could not find video URL. The post might be private or not a video.' };
+    }
+
+    // Extract other metadata
+    const title = $('meta[property="og:title"]').attr('content') || 
+                  $('meta[name="description"]').attr('content') || 
+                  'Instagram Video';
     
-    python.on('error', (err) => {
-      console.error('Failed to start Python process:', err);
-      resolve({ success: false, error: 'Failed to start Python process' });
-    });
-    
-    // Set timeout for Python process
-    setTimeout(() => {
-      python.kill();
-      resolve({ success: false, error: 'Python extraction timed out' });
-    }, 30000); // 30 second timeout
-  });
+    const thumbnailUrl = $('meta[property="og:image"]').attr('content') || 
+                         $('meta[property="og:image:secure_url"]').attr('content');
+
+    // Try to extract author from various sources
+    let author = 'Instagram User';
+    const authorMeta = $('meta[property="og:description"]').attr('content');
+    if (authorMeta) {
+      const authorMatch = authorMeta.match(/by\s+@?(\w+)/i);
+      if (authorMatch) {
+        author = authorMatch[1];
+      }
+    }
+
+    return {
+      success: true,
+      videoUrl,
+      thumbnailUrl,
+      title,
+      author
+    };
+
+  } catch (error: any) {
+    console.error('Extraction error:', error);
+    return { 
+      success: false, 
+      error: 'Failed to extract video. Please try again or check if the URL is valid.' 
+    };
+  }
 }
 
 // Handle OPTIONS request for CORS
