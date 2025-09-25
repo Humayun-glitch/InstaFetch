@@ -1,6 +1,4 @@
 # Python dependencies for Instagram video downloader
-# Optimized for Vercel serverless environment
-requests>=2.31.0,<3.0.0
-urllib3>=2.0.0,<3.0.0
-# yt-dlp is optional and may not work in serverless environment
-# yt-dlp>=2023.12.30
+requests>=2.31.0
+yt-dlp>=2023.12.30
+urllib3>=2.0.0

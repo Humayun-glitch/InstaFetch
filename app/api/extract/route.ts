@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
     console.log(`Processing Instagram video: ${videoId}`)
 
     try {
-      // Try the Vercel-optimized Python script first
-      let pythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader_vercel.py')
+      // Try the advanced Python script first (with yt-dlp)
+      let pythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader.py')
       let pythonCommand = 'python3'
       
       // On Windows, try 'python' instead of 'python3'
@@ -43,14 +43,8 @@ export async function POST(request: NextRequest) {
         pythonCommand = 'python'
       }
       
-      // In Vercel environment, use 'python' command
-      if (process.env.VERCEL) {
-        pythonCommand = 'python'
-      }
-      
       const pythonProcess = spawn(pythonCommand, [pythonScript, url], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, PYTHONUNBUFFERED: '1' }
+        stdio: ['pipe', 'pipe', 'pipe']
       })
 
       let stdout = ''
@@ -83,12 +77,11 @@ export async function POST(request: NextRequest) {
           reject(new Error(`Failed to start Python script: ${error.message}`))
         })
 
-        // Set a timeout for the Python script (shorter for Vercel)
-        const timeout = process.env.VERCEL ? 15000 : 30000 // 15s on Vercel, 30s locally
+        // Set a timeout for the Python script
         setTimeout(() => {
           pythonProcess.kill()
           reject(new Error('Python script timeout'))
-        }, timeout)
+        }, 30000) // 30 second timeout
       })
 
       const pythonResult = result as any
@@ -128,16 +121,10 @@ export async function POST(request: NextRequest) {
       // Try the simple Python script as fallback
       try {
         const simplePythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader_simple.py')
-        let pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
-        
-        // In Vercel environment, use 'python' command
-        if (process.env.VERCEL) {
-          pythonCommand = 'python'
-        }
+        const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
         
         const simplePythonProcess = spawn(pythonCommand, [simplePythonScript, url], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env, PYTHONUNBUFFERED: '1' }
+          stdio: ['pipe', 'pipe', 'pipe']
         })
 
         let simpleStdout = ''
@@ -170,12 +157,11 @@ export async function POST(request: NextRequest) {
             reject(new Error(`Failed to start simple Python script: ${error.message}`))
           })
 
-          // Set a timeout for the simple Python script (shorter for Vercel)
-          const timeout = process.env.VERCEL ? 10000 : 15000 // 10s on Vercel, 15s locally
+          // Set a timeout for the simple Python script
           setTimeout(() => {
             simplePythonProcess.kill()
             reject(new Error('Simple Python script timeout'))
-          }, timeout)
+          }, 15000) // 15 second timeout
         })
 
         const simplePythonResult = simpleResult as any

@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "vercel-build": "npm run build",
-    "postinstall": "pip install -r requirements.txt || echo 'Python dependencies installation failed - continuing'"
+    "lint": "next lint"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

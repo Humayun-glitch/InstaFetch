@@ -132,46 +132,13 @@ The API route automatically tries the advanced script first, then falls back to 
 
 ### Vercel (Recommended)
 
-InstaFetch is optimized for Vercel deployment with Python Instagram video extraction.
-
-#### Quick Deploy
-1. **Push to GitHub**:
-   ```bash
-   git add .
-   git commit -m "Ready for Vercel deployment"
-   git push origin main
-   ```
-
-2. **Deploy to Vercel**:
-   - Go to [vercel.com](https://vercel.com)
-   - Click "New Project"
-   - Import your GitHub repository
-   - Deploy automatically
-
-3. **Configure Environment Variables**:
-   ```env
-   NODE_ENV=production
-   NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=ca-pub-xxxxxxxxxx
-   NEXT_PUBLE_GOOGLE_ADSENSE_SLOT_ID=xxxxxxxxxx
-   ```
-
-#### Vercel CLI
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel login
-vercel
-```
-
-### Validation
-Before deploying, run the validation script:
-```bash
-node scripts/validate-deployment.js
-```
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy automatically
 
 ### Manual Deployment
+
 ```bash
 npm run build
 npm start
