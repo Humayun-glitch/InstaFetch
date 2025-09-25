@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "railway:deploy": "railway up",
+    "railway:login": "railway login",
+    "railway:init": "railway init",
+    "validate": "node scripts/validate-deployment.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

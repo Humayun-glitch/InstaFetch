@@ -130,7 +130,58 @@ The API route automatically tries the advanced script first, then falls back to 
 
 ## Deployment
 
-### Vercel (Recommended)
+### Railway (Recommended for Python Support)
+
+Railway is perfect for InstaFetch because it supports both Node.js and Python in the same deployment.
+
+#### Quick Deploy to Railway
+
+1. **Push to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Ready for Railway deployment"
+   git push origin main
+   ```
+
+2. **Deploy via Railway Dashboard**:
+   - Go to [Railway.app](https://railway.app)
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your InstaFetch repository
+   - Click "Deploy Now"
+
+3. **Set Environment Variables** in Railway dashboard:
+   ```env
+   NODE_ENV=production
+   NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=ca-pub-xxxxxxxxxx
+   NEXT_PUBLIC_GOOGLE_ADSENSE_SLOT_ID=xxxxxxxxxx
+   ```
+
+#### Deploy via Railway CLI
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+```
+
+#### Automated Deployment Script
+
+```bash
+# Windows
+scripts/railway-deploy.bat
+
+# Linux/Mac
+chmod +x scripts/railway-deploy.sh
+./scripts/railway-deploy.sh
+```
+
+📖 **Detailed Railway Guide**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete instructions.
+
+### Vercel (Alternative)
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
