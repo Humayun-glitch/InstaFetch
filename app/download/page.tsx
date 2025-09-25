@@ -1,261 +1,281 @@
-'use client';
+'use client'
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, CircleAlert as AlertCircle, CircleCheck as CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import AdSenseAd from '@/components/AdSenseAd';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AdSenseAd } from '@/components/AdSenseAd'
+import { Download, ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
+import { isValidInstagramUrl, formatFileSize } from '@/lib/utils'
 
 interface VideoData {
-  videoUrl: string;
-  thumbnailUrl: string;
-  title: string;
-  author: string;
+  id: string
+  title: string
+  description: string
+  thumbnail: string
+  videoUrl: string
+  duration: number
+  size: number
+  quality: string
+  originalUrl: string
+  extractedAt: string
 }
 
-function DownloadContent() {
-  const searchParams = useSearchParams();
-  const url = searchParams.get('url');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [videoData, setVideoData] = useState<VideoData | null>(null);
-  const [hasFetched, setHasFetched] = useState(false);
+export default function DownloadPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [videoData, setVideoData] = useState<VideoData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const url = searchParams.get('url')
 
   useEffect(() => {
     if (!url) {
-      setError('No URL provided');
-      setLoading(false);
-      return;
+      setError('No URL provided')
+      setIsLoading(false)
+      return
     }
 
-    // Prevent duplicate requests
-    if (hasFetched) {
-      return;
+    if (!isValidInstagramUrl(url)) {
+      setError('Invalid Instagram URL')
+      setIsLoading(false)
+      return
     }
 
-    const fetchVideo = async () => {
-      try {
-        setLoading(true);
-        setHasFetched(true);
-        
-        const response = await fetch('/api/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url }),
-        });
+    fetchVideoData(url)
+  }, [url])
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to extract video');
-        }
-
-        setVideoData(data);
-        
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        setHasFetched(false); // Allow retry on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideo();
-  }, [url, hasFetched]);
-
-  const handleDownload = async () => {
-    if (!videoData) return;
-
+  const fetchVideoData = async (instagramUrl: string) => {
     try {
-      // Track download completion
-      await fetch('/api/analytics/track', {
+      setIsLoading(true)
+      setError(null)
+
+      const response = await fetch('/api/extract', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          event: 'video_downloaded',
-          url: url 
-        }),
-      });
-    } catch (analyticsError) {
-      console.warn('Analytics tracking failed:', analyticsError);
+        body: JSON.stringify({ url: instagramUrl }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to process video')
+      }
+
+      setVideoData(result.data)
+    } catch (err) {
+      console.error('Error fetching video data:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    // Create a temporary link element to trigger download
-    const link = document.createElement('a');
-    link.href = videoData.videoUrl;
-    link.download = `${videoData.title || 'instagram-video'}.mp4`;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // Add to DOM, click, and remove
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const handleDownload = async () => {
+    if (!videoData?.videoUrl) return
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <Header />
+    try {
+      setIsDownloading(true)
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Back Button */}
-          <div className="mb-6">
-            <Link href="/" className="inline-flex items-center text-purple-600 hover:text-purple-700 transition-colors">
+      // Create a temporary link to trigger download
+      const link = document.createElement('a')
+      link.href = videoData.videoUrl
+      link.download = `instagram_video_${videoData.id}.mp4`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      console.error('Download error:', err)
+      alert('Download failed. Please try again.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleRetry = () => {
+    if (url) {
+      fetchVideoData(url)
+    }
+  }
+
+  const handleNewDownload = () => {
+    router.push('/')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold mb-2">Processing Video</h2>
+            <p className="text-gray-600">Extracting video information...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2 text-red-600">Error</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <div className="space-y-2">
+              <Button onClick={handleRetry} className="w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+              <Button onClick={handleNewDownload} variant="outline" className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                New Download
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!videoData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">No Video Data</h2>
+            <p className="text-gray-600 mb-6">Unable to load video information</p>
+            <Button onClick={handleNewDownload} className="w-full">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
-            </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-16">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
+          <h1 className="text-3xl font-bold mb-2">Video Ready for Download!</h1>
+          <p className="text-gray-600">Your Instagram video has been processed successfully</p>
+        </div>
 
-          {/* AdSense Ad - Top */}
-          <div className="mb-8 flex justify-center">
-            <AdSenseAd 
-              slot="1111111111" 
-              format="auto" 
-              className="w-full max-w-728px"
-            />
-          </div>
+        {/* AdSense Banner */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <AdSenseAd 
+            slot="1234567890" 
+            className="w-full"
+            style={{ display: 'block', width: '100%', height: '120px' }}
+          />
+        </div>
 
-          {/* Main Content Card */}
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
-            <CardContent className="p-8">
-              {loading && (
-                <div className="text-center py-16">
-                  <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-purple-600" />
-                  <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Processing your video...</h2>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Please wait while we extract the video from Instagram
-                  </p>
+        {/* Video Info Card */}
+        <Card className="max-w-4xl mx-auto mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl">Video Information</CardTitle>
+            <CardDescription>
+              Video details and download options
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Video Preview */}
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-shrink-0">
+                <img
+                  src={videoData.thumbnail}
+                  alt={videoData.title}
+                  className="w-full md:w-64 h-48 object-cover rounded-lg"
+                />
+              </div>
+              <div className="flex-1 space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">{videoData.title}</h3>
+                  <p className="text-gray-600">{videoData.description}</p>
                 </div>
-              )}
-
-              {error && (
-                <div className="text-center py-16">
-                  <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Error</h2>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
-                  <button
-                    onClick={() => {
-                      setError(null);
-                      setHasFetched(false);
-                      setLoading(true);
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              )}
-
-              {videoData && (
-                <div className="space-y-8">
-                  {/* Success Message */}
-                  <div className="text-center">
-                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Video Ready!</h2>
-                    <p className="text-gray-600 dark:text-gray-300">Your Instagram video has been extracted successfully</p>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Duration:</span>
+                    <span className="ml-2">{videoData.duration}s</span>
                   </div>
-
-                  {/* Video Preview */}
-                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
-                    <video
-                      src={videoData.videoUrl}
-                      poster={videoData.thumbnailUrl}
-                      controls
-                      className="w-full h-auto rounded-lg"
-                      preload="metadata"
-                    >
-                      Your browser does not support the video tag.
-                    </video>
+                  <div>
+                    <span className="font-medium text-gray-700">Size:</span>
+                    <span className="ml-2">{formatFileSize(videoData.size)}</span>
                   </div>
-
-                  {/* Video Info */}
-                  <div className="text-center">
-                    <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{videoData.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-6">By: {videoData.author}</p>
+                  <div>
+                    <span className="font-medium text-gray-700">Quality:</span>
+                    <span className="ml-2 capitalize">{videoData.quality}</span>
                   </div>
-
-                  {/* Download Button */}
-                  <div className="text-center">
-                    <button
-                      onClick={handleDownload}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-lg font-semibold py-4 px-8 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 inline-flex items-center"
-                    >
-                      <Download className="w-5 h-5 mr-2" />
-                      Download Video
-                    </button>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                      • Original quality • No watermarks • Fast download
-                    </p>
+                  <div>
+                    <span className="font-medium text-gray-700">Format:</span>
+                    <span className="ml-2">MP4</span>
                   </div>
-                </div>
-              )}
-
-              {!loading && !error && !videoData && (
-                <div className="text-center py-16">
-                  <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">No URL provided</h2>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">
-                    Please go back to the home page and enter a valid Instagram video URL.
-                  </p>
-                  <Link href="/" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block">
-                    Go to Home
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* AdSense Ad - Bottom */}
-          <div className="mb-8 flex justify-center">
-            <AdSenseAd 
-              slot="2222222222" 
-              format="auto"
-              className="w-full max-w-728px"
-            />
-          </div>
-
-          {/* Instructions */}
-          <Card className="border-0 bg-white/60 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">How to Download</h3>
-              <div className="grid md:grid-cols-2 gap-4 text-gray-600 dark:text-gray-300">
-                <div className="space-y-2">
-                  <p>• Click the "Download Video" button above</p>
-                  <p>• The video will be saved to your downloads folder</p>
-                </div>
-                <div className="space-y-2">
-                  <p>• For mobile: tap and hold the video, then "Save to Photos"</p>
-                  <p>• Videos are downloaded in original Instagram quality</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Download Button */}
+            <div className="pt-4 border-t">
+              <Button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="w-full md:w-auto instafetch-gradient text-white hover:opacity-90"
+                size="lg"
+              >
+                {isDownloading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Downloading...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Download className="w-5 h-5" />
+                    Download Video
+                  </div>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AdSense Rectangle */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <AdSenseAd 
+            slot="0987654321" 
+            className="w-full"
+            style={{ display: 'block', width: '100%', height: '250px' }}
+          />
         </div>
-      </main>
 
-      <Footer />
-    </div>
-  );
-}
-
-export default function Download() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        {/* Action Buttons */}
+        <div className="text-center space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button onClick={handleNewDownload} variant="outline" size="lg">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Download Another Video
+            </Button>
+            <Button onClick={handleRetry} variant="outline" size="lg">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
       </div>
-    }>
-      <DownloadContent />
-    </Suspense>
-  );
+    </div>
+  )
 }

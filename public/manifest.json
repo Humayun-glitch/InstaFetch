@@ -1,26 +1,16 @@
 {
   "name": "InstaFetch - Instagram Video Downloader",
   "short_name": "InstaFetch",
-  "description": "Download Instagram videos instantly with InstaFetch. Fast, free, and simple Instagram video downloader.",
+  "description": "Fast, free, and simple Instagram video downloads",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#8B5CF6",
-  "orientation": "portrait-primary",
+  "theme_color": "#667eea",
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "any",
       "type": "image/x-icon"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
     }
-  ],
-  "categories": ["utilities", "productivity"],
-  "lang": "en",
-  "scope": "/",
-  "prefer_related_applications": false
+  ]
 }

@@ -1,105 +1,113 @@
-import { Metadata } from 'next';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import { Card, CardContent } from '@/components/ui/card';
-
-export const metadata: Metadata = {
-  title: 'Privacy Policy - InstaFetch',
-  description: 'Privacy Policy for InstaFetch Instagram Video Downloader. Learn how we handle your data and privacy.',
-  robots: 'index, follow',
-};
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-8">
-              <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-                Privacy Policy
-              </h1>
-              
-              <div className="prose prose-gray dark:prose-invert max-w-none">
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  <strong>Last updated:</strong> {new Date().toLocaleDateString()}
-                </p>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4">
+              <span className="instafetch-gradient-text">Privacy Policy</span>
+            </h1>
+            <p className="text-lg text-gray-600">
+              Last updated: {new Date().toLocaleDateString()}
+            </p>
+          </div>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Information We Collect
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  InstaFetch is committed to protecting your privacy. We collect minimal information necessary to provide our service:
-                </p>
-                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 mb-6 space-y-2">
-                  <li>Instagram URLs you provide for video extraction</li>
-                  <li>Basic usage analytics to improve our service</li>
-                  <li>Anonymous technical data for service optimization</li>
-                </ul>
+          <Card>
+            <CardHeader>
+              <CardTitle>Information We Collect</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                InstaFetch is designed with privacy in mind. We collect minimal information to provide our service:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li>Instagram URLs that you provide for processing</li>
+                <li>Basic usage analytics to improve our service</li>
+                <li>Error logs to help us fix issues</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  How We Use Your Information
-                </h2>
-                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 mb-6 space-y-2">
-                  <li>To extract and download Instagram videos as requested</li>
-                  <li>To improve our service and user experience</li>
-                  <li>To analyze usage patterns and optimize performance</li>
-                  <li>To ensure compliance with Instagram's terms of service</li>
-                </ul>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>How We Use Your Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                We use the information we collect to:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li>Process your Instagram video download requests</li>
+                <li>Improve our service performance and reliability</li>
+                <li>Analyze usage patterns to enhance user experience</li>
+                <li>Debug technical issues and errors</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Data Storage and Security
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  We do not store your personal information or downloaded videos on our servers. All video processing is done in real-time and videos are served directly from Instagram's servers.
-                </p>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Data Storage and Security</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                We take your privacy seriously:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li>We do not store your downloaded videos on our servers</li>
+                <li>All data transmission is encrypted using HTTPS</li>
+                <li>We do not share your personal information with third parties</li>
+                <li>Analytics data is anonymized and aggregated</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Third-Party Services
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  We use Google AdSense for advertising. Google may use cookies and similar technologies to serve ads based on your visits to our site and other sites on the Internet.
-                </p>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Third-Party Services</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                We use the following third-party services:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li><strong>Google AdSense:</strong> For displaying advertisements (subject to Google's privacy policy)</li>
+                <li><strong>Vercel:</strong> For hosting our application (subject to Vercel's privacy policy)</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Cookies and Tracking
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  We use cookies for analytics and advertising purposes. You can disable cookies in your browser settings, but this may affect the functionality of our service.
-                </p>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Your Rights</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                You have the right to:
+              </p>
+              <ul className="list-disc list-inside space-y-2 text-gray-600">
+                <li>Request information about the data we collect</li>
+                <li>Request deletion of your data</li>
+                <li>Opt out of analytics tracking</li>
+                <li>Contact us with privacy concerns</li>
+              </ul>
+            </CardContent>
+          </Card>
 
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Your Rights
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  You have the right to:
-                </p>
-                <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 mb-6 space-y-2">
-                  <li>Access your personal information</li>
-                  <li>Request deletion of your data</li>
-                  <li>Opt-out of data collection</li>
-                  <li>Contact us with privacy concerns</li>
-                </ul>
-
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-                  Contact Us
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  If you have any questions about this Privacy Policy, please contact us at privacy@instafetch.com
-                </p>
-
-                <p className="text-gray-600 dark:text-gray-300 text-sm mt-8">
-                  This privacy policy may be updated from time to time. We will notify users of any material changes by posting the new privacy policy on this page.
-                </p>
-              </div>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Contact Us</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                If you have any questions about this Privacy Policy, please contact us through our website.
+              </p>
             </CardContent>
           </Card>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
-  );
+  )
 }
