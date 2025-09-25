@@ -34,12 +34,17 @@ export async function POST(request: NextRequest) {
     console.log(`Processing Instagram video: ${videoId}`)
 
     try {
-      // Try the advanced Python script first (with yt-dlp)
-      let pythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader.py')
+      // Try the Railway-optimized Python script first
+      let pythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader_railway.py')
       let pythonCommand = 'python3'
       
       // On Windows, try 'python' instead of 'python3'
       if (process.platform === 'win32') {
+        pythonCommand = 'python'
+      }
+      
+      // In Railway environment, use 'python' command
+      if (process.env.RAILWAY_ENVIRONMENT) {
         pythonCommand = 'python'
       }
       
@@ -121,7 +126,12 @@ export async function POST(request: NextRequest) {
       // Try the simple Python script as fallback
       try {
         const simplePythonScript = path.join(process.cwd(), 'scripts', 'instagram_downloader_simple.py')
-        const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
+        let pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
+        
+        // In Railway environment, use 'python' command
+        if (process.env.RAILWAY_ENVIRONMENT) {
+          pythonCommand = 'python'
+        }
         
         const simplePythonProcess = spawn(pythonCommand, [simplePythonScript, url], {
           stdio: ['pipe', 'pipe', 'pipe']
